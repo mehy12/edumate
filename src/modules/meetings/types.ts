@@ -59,4 +59,5 @@ export interface MeetingSummaryJson {
             purchase_url: string;
         }[];
     };
+    roadmapId?: string; // ID of the roadmap in meetingSummaries table
 }

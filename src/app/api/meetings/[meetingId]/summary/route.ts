@@ -172,7 +172,11 @@ export async function GET(
   if (existingSummary) {
     try {
       const json = JSON.parse(existingSummary.summaryJson);
-      return NextResponse.json(json);
+      // Include roadmap ID in the response for linking to roadmap detail page
+      return NextResponse.json({
+        ...json,
+        roadmapId: existingSummary.id,
+      });
     } catch (err) {
       console.error("Stored meeting summary is not valid JSON", err);
       return NextResponse.json(
@@ -276,14 +280,16 @@ export async function GET(
     );
   }
 
+  let roadmapId: string | undefined;
   try {
-    await db.insert(meetingSummaries).values({
+    const [inserted] = await db.insert(meetingSummaries).values({
       meetingId: existingMeeting.id,
       userId: session.user.id,
       topic: topic ?? null,
       summaryJson: JSON.stringify(parsed),
       createdAt: new Date(),
-    });
+    }).returning();
+    roadmapId = inserted.id;
   } catch (err) {
     console.error("Failed to persist meeting summary", err);
     return NextResponse.json(
@@ -292,5 +298,8 @@ export async function GET(
     );
   }
 
-  return NextResponse.json(parsed);
+  return NextResponse.json({
+    ...parsed,
+    roadmapId,
+  });
 }

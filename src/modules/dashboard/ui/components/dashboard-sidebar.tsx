@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-import { BotIcon, VideoIcon, StarIcon, HomeIcon } from "lucide-react";
+import { BotIcon, VideoIcon, StarIcon, HomeIcon, MapIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -34,6 +34,11 @@ const firstSection = [
     icon: BotIcon,
     label: "Agents",
     href: "/agents",
+  },
+  {
+    icon: MapIcon,
+    label: "Roadmaps",
+    href: "/roadmaps",
   },
 ];
 const secondSection = [
@@ -66,26 +71,31 @@ export function DashboardSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {firstSection.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    className={cn(
-                      "h-10 border border-transparent bg-[var(--sidebar)]",
-                      "hover:border-[#592E83]/20",
-                      pathname === item.href &&
-                        "border-[#9984D4]/20 bg-[linear-gradient(to_right,var(--sidebar-accent)_5%,var(--sidebar-primary)_30%,var(--sidebar)_100%)]"
-                    )}
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="size-5" />
-                      <span className="text-sm font-medium tracking-tight">
-                        {item.label}
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {firstSection.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href + "/"));
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      className={cn(
+                        "h-10 border border-transparent bg-[var(--sidebar)]",
+                        "hover:border-[#592E83]/20",
+                        isActive &&
+                          "border-[#9984D4]/20 bg-[linear-gradient(to_right,var(--sidebar-accent)_5%,var(--sidebar-primary)_30%,var(--sidebar)_100%)]"
+                      )}
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="size-5" />
+                        <span className="text-sm font-medium tracking-tight">
+                          {item.label}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

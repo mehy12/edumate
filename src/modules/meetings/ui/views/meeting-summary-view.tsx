@@ -206,11 +206,20 @@ export default function MeetingSummaryView({ meetingId }: MeetingSummaryViewProp
 
           {/* Roadmap visualization */}
           <Card>
-            <CardHeader>
-              <CardTitle>Learning roadmap</CardTitle>
-              <CardDescription>
-                A concept and class roadmap showing how your next lessons connect.
-              </CardDescription>
+            <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Learning roadmap</CardTitle>
+                <CardDescription>
+                  A concept and class roadmap showing how your next lessons connect.
+                </CardDescription>
+              </div>
+              {data.roadmapId && (
+                <Button asChild variant="outline" className="mt-2 md:mt-0">
+                  <Link href={`/roadmaps/${data.roadmapId}`}>
+                    View roadmap in Roadmaps
+                  </Link>
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {data.roadmap.nodes.length && data.roadmap.links.length ? (
