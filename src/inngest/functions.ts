@@ -2,8 +2,8 @@ import { StreamTranscriptItem } from "@/modules/meetings/types";
 import { inngest } from "./client";
 import JSONL from "jsonl-parse-stringify"
 import { db } from "@/db";
-import { agents, meetings, user } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
+import { user, agents, meetings } from "@/db/schema";
 import { createAgent, TextMessage, gemini } from '@inngest/agent-kit'
 
 
@@ -16,7 +16,7 @@ You are a summarizer for a meeting. You will be given a transcript of a meeting 
 
     model: gemini({
         model: 'gemini-2.0-flash',
-        apiKey: "AIzaSyBCzkOBLlO4KKirVELzxrPsMWd_6M_6mSY"
+        apiKey: process.env.GEMINI_API_KEY!,
     })
 
 })
@@ -39,9 +39,15 @@ export const meetingsProcessing = inngest.createFunction(
         // })
 
 
-        //use this during production
+        // Defensive checks for required event data
+        if (!event.data.transcriptUrl) {
+            throw new Error("Missing transcriptUrl in event data");
+        }
+        if (!event.data.meetingId) {
+            throw new Error("Missing meetingId in event data");
+        }
 
-        const response = await step.fetch(event.data.transcriptUrl);//development
+        const response = await step.fetch(event.data.transcriptUrl); // development
 
         const transcript = await step.run("parse-transcript", async () => {
             const text = await response.text();
@@ -124,3 +130,19 @@ export const meetingsProcessing = inngest.createFunction(
         })
     }
 )
+const schedulingAgent = createAgent({
+    name: "scheduler",
+    system: `
+You are a scheduling assistant. You will be given a JSON payload describing a student: their proficiency/level, preferred availability windows (days/times or ranges), and how many future sessions are desired. Your job is to return a JSON object with an array named "sessions" containing ISO-8601 datetimes (UTC) for the proposed session start times. Choose sensible spacing (e.g., one session per week) and pick times inside the availability windows. Return strictly valid JSON only, shape: { "sessions": ["2025-11-20T15:00:00Z", ...], "explanation":"short explanation" }
+Do not include any extra text outside the JSON.
+`.trim(),
+
+    model: gemini({
+        model: 'gemini-2.0-flash',
+        apiKey: process.env.GEMINI_API_KEY!,
+    })
+
+})
+
+
+// Scheduling agent logic removed: no scheduling_requests table exists. Add your own logic here if needed.

@@ -143,6 +143,7 @@ export async function POST(req: NextRequest) {
         endedAt: new Date(),
       })
       .where(and(eq(meetings.id, meetingId), eq(meetings.status, "active")))
+
   } else if (eventType === "call.transcription_ready") {
     const event = payload as CallTranscriptionReadyEvent;
     const meetingId = event.call_cid.split(":")[1]; //call_cid is in format `default:meetingId`
@@ -150,10 +151,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing meeting id" }, { status: 400 })
     }
 
+    const transcriptUrl = event.call_transcription?.url;
+    if (!transcriptUrl) {
+      return NextResponse.json({ error: "Missing transcriptUrl in event data" }, { status: 400 })
+    }
+
     const [updatedMeeting] = await db
       .update(meetings)
       .set({
-        transcriptUrl: event.call_transcription.url
+        transcriptUrl
       })
       .where(eq(meetings.id, meetingId))
       .returning()
@@ -166,7 +172,7 @@ export async function POST(req: NextRequest) {
       name: "meetings/processing",
       data: {
         meetingId: updatedMeeting.id,
-        transcriptUrl: updatedMeeting.transcriptUrl  // ✅ Fixed: "transcriptUrl"
+        transcriptUrl
       }
     })
 

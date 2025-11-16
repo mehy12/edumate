@@ -18,10 +18,7 @@ export const user = pgTable("user", {
     yearOfStudy: text('year_of_study'),
     branch: text('branch'),
     region: text('region').default("Bangalore"),
-    // Google Calendar tokens (optional)
-    googleAccessToken: text('google_access_token'),
-    googleRefreshToken: text('google_refresh_token'),
-    googleTokenExpiry: timestamp('google_token_expiry'),
+    // Google Calendar tokens removed
     createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
     updatedAt: timestamp('updated_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull()
 });
@@ -149,6 +146,26 @@ export const classSessions = pgTable("class_sessions", {
     title: text('title').notNull(),
     description: text('description'),
     scheduledAt: timestamp('scheduled_at'),
-    googleCalendarEventId: text('google_calendar_event_id'),
+    // googleCalendarEventId removed
+    createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+});
+
+export const quizzes = pgTable("quizzes", {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    sourceType: text('source_type').notNull(), // "meeting" | "course" | "manual"
+    sourceId: text('source_id'), // meetingId or classSessionId
+    topic: text('topic').notNull(),
+    difficulty: text('difficulty').notNull().default("medium"), // "easy" | "medium" | "hard"
+    questionsJson: text('questions_json').notNull(),
+    createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+});
+
+export const quizAttempts = pgTable("quiz_attempts", {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    quizId: text('quiz_id').notNull().references(() => quizzes.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    score: text('score').notNull(), // stored as string to handle 0-100
+    answersJson: text('answers_json').notNull(),
     createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
 });

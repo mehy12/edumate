@@ -90,6 +90,31 @@ export default function EnrollPage() {
     }
   }
 
+  async function handleStartClass(classSessionId: string) {
+    if (startingClass[classSessionId]) return;
+    setStartingClass({ ...startingClass, [classSessionId]: true });
+    try {
+      const res = await fetch(`/api/classes/${classSessionId}/start`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Failed to start class');
+      // Redirect to join URL (external or internal)
+      if (data.join_url) {
+        window.location.href = data.join_url;
+        return;
+      }
+      if (data.meeting_id) {
+        // fallback to internal meeting route if available
+        window.location.href = `/call/${data.meeting_id}`;
+        return;
+      }
+      setMessage('Started class but no join URL returned.');
+    } catch (err: any) {
+      console.error('Start class error', err);
+      setMessage(err?.message || 'Could not start the class. Please try again.');
+      setStartingClass({ ...startingClass, [classSessionId]: false });
+    }
+  }
+
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Enroll into a Course</h1>
@@ -242,21 +267,7 @@ export default function EnrollPage() {
                         </Button>
                       ) : <div />}
 
-                      <Button variant="default" size="sm" className="mt-2" onClick={async (e) => {
-                        e.stopPropagation();
-                        if (startingClass[c.classSessionId]) return;
-                        setStartingClass({ ...startingClass, [c.classSessionId]: true });
-                        try {
-                          const res = await fetch(`/api/classes/${c.classSessionId}/start`, { method: 'POST' });
-                          const data = await res.json();
-                          if (!res.ok) throw new Error(data?.error || 'Failed to start class');
-                          window.location.href = data.join_url;
-                        } catch (err: any) {
-                          console.error('Start class error', err);
-                          setMessage(err?.message || 'Could not start the class. Please try again.');
-                          setStartingClass({ ...startingClass, [c.classSessionId]: false });
-                        }
-                      }}>
+                      <Button variant="default" size="sm" className="mt-2" onClick={(e) => { e.stopPropagation(); handleStartClass(c.classSessionId); }}>
                         {startingClass[c.classSessionId] ? 'Starting…' : 'Start Class'}
                       </Button>
                     </div>

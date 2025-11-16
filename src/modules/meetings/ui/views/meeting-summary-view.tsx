@@ -2,13 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MeetingSummaryJson } from "@/modules/meetings/types";
-import { RoadmapGraph } from "../components/roadmap-graph";
+// RoadmapGraph removed
 
 interface MeetingSummaryViewProps {
   meetingId: string;
@@ -204,33 +205,7 @@ export default function MeetingSummaryView({ meetingId }: MeetingSummaryViewProp
             </CardContent>
           </Card>
 
-          {/* Roadmap visualization */}
-          <Card>
-            <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <CardTitle>Learning roadmap</CardTitle>
-                <CardDescription>
-                  A concept and class roadmap showing how your next lessons connect.
-                </CardDescription>
-              </div>
-              {data.roadmapId && (
-                <Button asChild variant="outline" className="mt-2 md:mt-0">
-                  <Link href={`/roadmaps/${data.roadmapId}`}>
-                    View roadmap in Roadmaps
-                  </Link>
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {data.roadmap.nodes.length && data.roadmap.links.length ? (
-                <RoadmapGraph nodes={data.roadmap.nodes} links={data.roadmap.links} />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No roadmap data was generated for this session.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          {/* Roadmap visualization removed (GoJS) */}
 
           {/* Resources */}
           <div className="grid gap-4 lg:grid-cols-2">
@@ -307,6 +282,38 @@ export default function MeetingSummaryView({ meetingId }: MeetingSummaryViewProp
               <Button asChild variant="outline">
                 <Link href={`/call/${meetingId}`}>Start a new live session</Link>
               </Button>
+              {data.roadmapId && (
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/quizzes/generate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          sourceType: "meeting",
+                          sourceId: meetingId,
+                          difficulty: "medium",
+                        }),
+                      });
+
+                      if (!res.ok) {
+                        const error = await res.json();
+                        throw new Error(error.error || "Failed to generate quiz");
+                      }
+
+                      const quizData = await res.json();
+                      toast.success("Quiz generated successfully!");
+                      window.location.href = `/quizzes/${quizData.quizId}`;
+                    } catch (error) {
+                      console.error("Error generating quiz:", error);
+                      toast.error(error instanceof Error ? error.message : "Failed to generate quiz");
+                    }
+                  }}
+                >
+                  Generate quiz from this session
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -233,7 +233,7 @@ export default function SignUpView() {
 
           <div className="bg-radial from-fuchsia-200 via-indigo-200 to-blue-200 relative hidden md:flex flex-col gap-y-6 items-center justify-center">
             <Image src="/logo.svg" alt="Logo" height={92} width={92} />
-            <p className="text-2xl font-semibold text-white">Meet.AI</p>
+            <p className="text-2xl font-semibold text-white"></p>
           </div>
         </CardContent>
       </Card>

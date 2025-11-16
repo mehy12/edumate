@@ -64,7 +64,6 @@
     "inngest": "^3.37.0",
     "input-otp": "^1.4.2",
     "jsonl-parse-stringify": "^1.0.3",
-    "gojs": "^2.0.0",
     "lucide-react": "^0.513.0",
     "nanoid": "^5.1.5",
     "next": "15.3.3",
@@ -88,6 +87,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^16.0.3",
     "@tailwindcss/postcss": "^4",
     "@types/humanize-duration": "^3.27.4",
     "@types/node": "^20",

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-import { BotIcon, VideoIcon, StarIcon, HomeIcon, MapIcon, UsersIcon, User as UserIcon } from "lucide-react";
+import { BotIcon, VideoIcon, StarIcon, HomeIcon, MapIcon, UsersIcon, User as UserIcon, BookOpenIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -51,6 +51,11 @@ const firstSection = [
     href: "/community",
   },
   {
+    icon: BookOpenIcon,
+    label: "Quizzes",
+    href: "/quizzes",
+  },
+  {
     icon: UserIcon,
     label: "Profile",
     href: "/profile",
@@ -71,12 +76,12 @@ export function DashboardSidebar() {
       <SidebarHeader className="text-sidebar-accent-foreground">
         <Link href={"/"} className="flex items-center gap-2 px-2 pt-2 ">
           <Image
-            src={"/logo-futuristic.svg"}
+            src={"/logo.svg"}
             alt="MeetAI"
-            height={36}
-            width={36}
+            height={150}
+            width={200}
           />
-          <p className="text-2xl font-semibold">MeetAI</p>
+          <p className="text-2xl font-semibold"></p>
         </Link>
       </SidebarHeader>
       <div className="px-4 py-2">
