@@ -35,6 +35,16 @@ export default async function RoadmapsPage({ searchParams }: Props) {
 
   return (
     <>
+      <div className="flex justify-end px-4 md:px-6 lg:px-8 mt-6 mb-2">
+        <form>
+          <button
+            type="button"
+            className="bg-primary text-primary-foreground rounded-md px-4 py-2 font-medium shadow-xs hover:bg-primary/90 transition-all"
+          >
+            Generate Roadmap
+          </button>
+        </form>
+      </div>
       <RoadmapsListHeader />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <Suspense fallback={<RoadmapsViewLoading />}>

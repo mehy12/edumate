@@ -7,12 +7,21 @@ export const user = pgTable("user", {
     email: text('email').notNull().unique(),
     emailVerified: boolean('email_verified').$defaultFn(() => false).notNull(),
     image: text('image'),
+    // Avatar URL (preferred) — keep `image` for backward compatibility
+    avatarUrl: text('avatar_url'),
+    // Short bio/profile summary
+    bio: text('bio'),
     // Onboarding-related fields
     interests: text('interests'),
     hasCompletedOnboarding: boolean('has_completed_onboarding').$defaultFn(() => false).notNull(),
     collegeName: text('college_name'),
     yearOfStudy: text('year_of_study'),
     branch: text('branch'),
+    region: text('region').default("Bangalore"),
+    // Google Calendar tokens (optional)
+    googleAccessToken: text('google_access_token'),
+    googleRefreshToken: text('google_refresh_token'),
+    googleTokenExpiry: timestamp('google_token_expiry'),
     createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
     updatedAt: timestamp('updated_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull()
 });
@@ -89,5 +98,57 @@ export const meetingSummaries = pgTable("meeting_summaries", {
     userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
     topic: text('topic'),
     summaryJson: text('summary_json').notNull(),
+    createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+});
+
+export const channels = pgTable("channels", {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    name: text('name').notNull(),
+    description: text('description'),
+    region: text('region').notNull(),
+    createdByUserId: text('created_by_user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+});
+
+export const channelMembers = pgTable("channel_members", {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    channelId: text('channel_id').notNull().references(() => channels.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    joinedAt: timestamp('joined_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+});
+
+export const channelMessages = pgTable("channel_messages", {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    channelId: text('channel_id').notNull().references(() => channels.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+});
+
+export const activityEvents = pgTable("activity_events", {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+});
+
+export const courseEnrollments = pgTable("course_enrollments", {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    topic: text('topic').notNull(),
+    estimatedClassCount: text('estimated_class_count'),
+    learningSpeed: text('learning_speed'),
+    status: text('status').notNull().default('planned'),
+    createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
+});
+
+export const classSessions = pgTable("class_sessions", {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    enrollmentId: text('enrollment_id').notNull().references(() => courseEnrollments.id, { onDelete: 'cascade' }),
+    sessionIndex: text('session_index').notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    scheduledAt: timestamp('scheduled_at'),
+    googleCalendarEventId: text('google_calendar_event_id'),
     createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
 });

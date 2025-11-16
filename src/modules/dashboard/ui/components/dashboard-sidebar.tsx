@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-import { BotIcon, VideoIcon, StarIcon, HomeIcon, MapIcon } from "lucide-react";
+import { BotIcon, VideoIcon, StarIcon, HomeIcon, MapIcon, UsersIcon, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -39,6 +39,21 @@ const firstSection = [
     icon: MapIcon,
     label: "Roadmaps",
     href: "/roadmaps",
+  },
+  {
+    icon: StarIcon,
+    label: "Enroll",
+    href: "/enroll",
+  },
+  {
+    icon: UsersIcon,
+    label: "Community",
+    href: "/community",
+  },
+  {
+    icon: UserIcon,
+    label: "Profile",
+    href: "/profile",
   },
 ];
 const secondSection = [
