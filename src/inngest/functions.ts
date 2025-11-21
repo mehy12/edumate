@@ -31,23 +31,36 @@ export const meetingsProcessing = inngest.createFunction(
     { event: "meetings/processing" },
     async ({ event, step }) => {
 
-        // const response = await step.run("fetch-transcript", async () => {
-        //     return fetch(event.data.transcriptUrl).then(res => res.text())
-        // })  
-        // const transcript = await step.run("parse-transcript", async () => {
-        //     return JSONL.parse<StreamTranscriptItem>(response)
-        // })
-
-
         // Defensive checks for required event data
-        if (!event.data.transcriptUrl) {
-            throw new Error("Missing transcriptUrl in event data");
-        }
         if (!event.data.meetingId) {
             throw new Error("Missing meetingId in event data");
         }
 
-        const response = await step.fetch(event.data.transcriptUrl); // development
+        // Get transcriptUrl from event data or fetch from database
+        let transcriptUrl = event.data.transcriptUrl;
+        
+        if (!transcriptUrl) {
+            // Try to fetch from database if not in event data (e.g., on retries)
+            const meeting = await step.run("fetch-meeting", async () => {
+                const results = await db
+                    .select()
+                    .from(meetings)
+                    .where(eq(meetings.id, event.data.meetingId));
+                return results[0];
+            });
+
+            if (!meeting) {
+                throw new Error(`Meeting not found: ${event.data.meetingId}`);
+            }
+
+            if (!meeting.transcriptUrl) {
+                throw new Error(`Missing transcriptUrl for meeting: ${event.data.meetingId}`);
+            }
+
+            transcriptUrl = meeting.transcriptUrl;
+        }
+
+        const response = await step.fetch(transcriptUrl); // development
 
         const transcript = await step.run("parse-transcript", async () => {
             const text = await response.text();

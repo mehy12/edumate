@@ -95,29 +95,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 })
     }
 
+    // Ensure agent user exists in Stream before connecting
+    try {
+      await streamVideo.upsertUsers([{
+        id: existingAgent.id,
+        name: existingAgent.name,
+        role: 'user',
+      }]);
+    } catch (error) {
+      console.error('Error upserting agent user:', error);
+      // Continue anyway, as user might already exist
+    }
+
     try {
       const call = streamVideo.video.call("default", meetingId);
       console.log(`Connecting agent ${existingAgent.id} to call ${meetingId}`);
 
+      if (!process.env.OPENAI_API_KEY) {
+        console.error('OPENAI_API_KEY is not set');
+        return NextResponse.json(
+          { error: "OPENAI_API_KEY environment variable is not set" },
+          { status: 500 }
+        );
+      }
+
       const realtimeClient = await streamVideo.video.connectOpenAi({
         call,
-        openAiApiKey: process.env.OPENAI_API_KEY!,
+        openAiApiKey: process.env.OPENAI_API_KEY,
         agentUserId: existingAgent.id,
       });
 
       console.log(`Agent connected, updating session with instructions`);
 
+      if (!existingAgent.instructions) {
+        console.warn(`Agent ${existingAgent.id} has no instructions`);
+      }
+
       realtimeClient.updateSession({
-        instructions: existingAgent.instructions,
+        instructions: existingAgent.instructions || "You are a helpful AI assistant.",
       });
 
       console.log(`Agent session updated successfully`);
     } catch (error) {
       console.error('Error connecting agent to call:', error);
-      return NextResponse.json(
-        { error: "Failed to connect agent to call" },
-        { status: 500 }
-      );
+      // Log the full error for debugging
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+      }
+      // Don't return error - allow webhook to succeed so meeting status is updated
+      // The agent connection can be retried or handled separately
     }
   } else if (eventType === "call.session_participant_left") {
     const event = payload as CallSessionParticipantLeftEvent;
@@ -148,13 +174,17 @@ export async function POST(req: NextRequest) {
     const event = payload as CallTranscriptionReadyEvent;
     const meetingId = event.call_cid.split(":")[1]; //call_cid is in format `default:meetingId`
     if (!meetingId) {
+      console.error("Missing meeting id in transcription_ready event");
       return NextResponse.json({ error: "Missing meeting id" }, { status: 400 })
     }
 
     const transcriptUrl = event.call_transcription?.url;
     if (!transcriptUrl) {
+      console.error(`Missing transcriptUrl in transcription_ready event for meeting ${meetingId}`);
       return NextResponse.json({ error: "Missing transcriptUrl in event data" }, { status: 400 })
     }
+
+    console.log(`Processing transcription_ready for meeting ${meetingId} with transcriptUrl: ${transcriptUrl}`);
 
     const [updatedMeeting] = await db
       .update(meetings)
@@ -165,16 +195,23 @@ export async function POST(req: NextRequest) {
       .returning()
 
     if (!updatedMeeting) {
+      console.error(`Meeting not found: ${meetingId}`);
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 })
     }
 
-    await inngest.send({
-      name: "meetings/processing",
-      data: {
-        meetingId: updatedMeeting.id,
-        transcriptUrl
-      }
-    })
+    try {
+      await inngest.send({
+        name: "meetings/processing",
+        data: {
+          meetingId: updatedMeeting.id,
+          transcriptUrl
+        }
+      });
+      console.log(`Sent Inngest event for meeting ${updatedMeeting.id}`);
+    } catch (error) {
+      console.error(`Failed to send Inngest event for meeting ${updatedMeeting.id}:`, error);
+      // Don't fail the webhook - the event can be retried
+    }
 
 
   } else if (eventType === "call.recording_ready") {
